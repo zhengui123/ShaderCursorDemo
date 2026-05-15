@@ -213,6 +213,19 @@ public static class MapContourSdfMeshSave
 
         Vector3 objUp = Quaternion.Inverse(transform.rotation) * worldUp.normalized;
 
+        float maxH = float.MinValue, minH = float.MaxValue;
+        for (int i = 0; i < verts.Length; i++)
+        {
+            float h = Vector3.Dot(verts[i], objUp);
+            if (h > maxH) maxH = h;
+            if (h < minH) minH = h;
+        }
+
+        float height = maxH - minH;
+        float heightEps = Mathf.Max(height * 0.35f, 1e-5f);
+        var meshNormals = mesh.normals;
+        bool hasVertNormals = meshNormals != null && meshNormals.Length == verts.Length;
+
         var topTris = new List<int>();
         for (int t = 0; t < tris.Length; t += 3)
         {
@@ -222,7 +235,19 @@ public static class MapContourSdfMeshSave
             if (fn.sqrMagnitude < 1e-20f)
                 continue;
             fn.Normalize();
-            if (Vector3.Dot(fn, objUp) >= topFaceDotMin)
+
+            bool faceUp = Vector3.Dot(fn, objUp) >= topFaceDotMin;
+            float h0 = Vector3.Dot(o0, objUp), h1 = Vector3.Dot(o1, objUp), h2 = Vector3.Dot(o2, objUp);
+            bool heightTop = h0 >= maxH - heightEps && h1 >= maxH - heightEps && h2 >= maxH - heightEps;
+            bool vertUp = false;
+            if (hasVertNormals)
+            {
+                float avgN = (Vector3.Dot(meshNormals[ia], objUp) + Vector3.Dot(meshNormals[ib], objUp) +
+                              Vector3.Dot(meshNormals[ic], objUp)) / 3f;
+                vertUp = avgN >= topFaceDotMin * 0.85f;
+            }
+
+            if (faceUp || heightTop || vertUp)
                 topTris.Add(t);
         }
 

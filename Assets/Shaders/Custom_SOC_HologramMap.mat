@@ -37,7 +37,7 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
-    - _ContourMode: 4.82
+    - _ContourMode: 5
     - _ContourSdfAmp: 0.45
     - _ContourTexChannel: 0
     - _ContourTexInvert: 0
@@ -55,18 +55,18 @@ Material:
     - _GeoEdgeBoost: 0.35
     - _GeoEdgePower: 3
     - _GeomAmp: 921
-    - _GradientAlpha: 0
+    - _GradientAlpha: 0.75
     - _GradientBand: 0.11
     - _GradientEdgeCut: 0.268
     - _GradientPower: 3.8
     - _GradientSensitivity: 1.26
     - _InteriorAlpha: 1
-    - _LocalContourScale: 0.01
+    - _LocalContourScale: 0.68
     - _MaskStrength: 0.35
     - _TopFaceCos: 0.92
     - _UV1DistanceInvert: 0
-    - _UVRectAssist: 0.51
-    - _VertexContourAmp: 1.41
+    - _UVRectAssist: 0
+    - _VertexContourAmp: 0.5
     m_Colors:
     - _BoxMaxOS: {r: 0.5, g: 0.5, b: 0.5, a: 0}
     - _BoxMinOS: {r: -0.5, g: -0.5, b: -0.5, a: 0}

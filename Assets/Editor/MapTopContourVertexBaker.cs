@@ -62,6 +62,90 @@ public static class MapTopContourVertexBaker
         Debug.Log($"[MapTopContourVertexBaker] 完成：{work.name}，顶点数 {work.vertexCount}。请将材质「轮廓模式」设为 5。");
     }
 
+    [MenuItem("Tools/地图/批量烘焙 sd_map 全部板块顶面轮廓", priority = 12)]
+    static void BakeAllSdMapTiles()
+    {
+        var root = Selection.activeGameObject;
+        if (root == null)
+        {
+            var found = GameObject.Find("sd_map/polySurface1");
+            if (found == null)
+                found = GameObject.Find("sd_map");
+            root = found;
+        }
+
+        if (root == null)
+        {
+            EditorUtility.DisplayDialog("批量顶面轮廓烘焙", "请选中 sd_map 或其子节点 polySurface1。", "确定");
+            return;
+        }
+
+        var filters = root.GetComponentsInChildren<MeshFilter>(true);
+        var targets = new List<MeshFilter>();
+        foreach (var mf in filters)
+        {
+            if (mf.sharedMesh != null)
+                targets.Add(mf);
+        }
+
+        if (targets.Count == 0)
+        {
+            EditorUtility.DisplayDialog("批量顶面轮廓烘焙", "未找到带 Mesh 的子物体。", "确定");
+            return;
+        }
+
+        if (!EditorUtility.DisplayDialog("批量顶面轮廓烘焙",
+                $"将在「{root.name}」下烘焙 {targets.Count} 个 Mesh 的顶面轮廓顶点色。\n" +
+                "材质请使用轮廓模式 5（Custom/MapShader 或 SOC_HologramMap）。\n\n继续？",
+                "烘焙", "取消"))
+            return;
+
+        int ok = 0;
+        foreach (var mf in targets)
+        {
+            try
+            {
+                Mesh work = PrepareWritableMesh(mf, mf.sharedMesh);
+                Undo.RecordObject(work, "Batch bake top contour");
+                Undo.RecordObject(mf, "Batch bake top contour");
+                Bake(work, mf.transform, 0.92f, Vector3.up);
+                EditorUtility.SetDirty(work);
+                ok++;
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogWarning($"[MapTopContourVertexBaker] 跳过 {mf.name}: {e.Message}", mf);
+            }
+        }
+
+        AssetDatabase.SaveAssets();
+        EnsureContourMode5OnRenderers(targets);
+        Debug.Log($"[MapTopContourVertexBaker] 批量完成：{ok}/{targets.Count}。已尝试将 Renderer 材质轮廓模式设为 5。");
+    }
+
+    static void EnsureContourMode5OnRenderers(List<MeshFilter> filters)
+    {
+        var mats = new HashSet<Material>();
+        foreach (var mf in filters)
+        {
+            var mr = mf.GetComponent<MeshRenderer>();
+            if (mr == null)
+                continue;
+            foreach (var m in mr.sharedMaterials)
+            {
+                if (m != null && m.HasProperty("_ContourMode"))
+                    mats.Add(m);
+            }
+        }
+
+        foreach (var m in mats)
+        {
+            m.SetFloat("_ContourMode", 5f);
+            m.SetFloat("_UVRectAssist", 0f);
+            EditorUtility.SetDirty(m);
+        }
+    }
+
     static Mesh PrepareWritableMesh(MeshFilter mf, Mesh src)
     {
         string path = AssetDatabase.GetAssetPath(src);
@@ -89,7 +173,22 @@ public static class MapTopContourVertexBaker
 
         Vector3 objUp = Quaternion.Inverse(transform.rotation) * worldUp.normalized;
 
+        float maxH = float.MinValue, minH = float.MaxValue;
+        for (int i = 0; i < verts.Length; i++)
+        {
+            float h = Vector3.Dot(verts[i], objUp);
+            if (h > maxH) maxH = h;
+            if (h < minH) minH = h;
+        }
+
+        float height = maxH - minH;
+        // 薄挤出体（sd_map 板块 y 厚度约 0.002）：单靠面法线 ≥0.92 往往只命中十几个三角
+        float heightEps = Mathf.Max(height * 0.35f, 1e-5f);
+        var meshNormals = mesh.normals;
+        bool hasVertNormals = meshNormals != null && meshNormals.Length == verts.Length;
+
         var topTris = new List<int>();
+        int byFaceNormal = 0, byHeight = 0, byVertNormal = 0;
         for (int t = 0; t < tris.Length; t += 3)
         {
             int ia = tris[t], ib = tris[t + 1], ic = tris[t + 2];
@@ -98,12 +197,31 @@ public static class MapTopContourVertexBaker
             if (fn.sqrMagnitude < 1e-20f)
                 continue;
             fn.Normalize();
-            if (Vector3.Dot(fn, objUp) >= topFaceDotMin)
+
+            bool faceUp = Vector3.Dot(fn, objUp) >= topFaceDotMin;
+            float h0 = Vector3.Dot(o0, objUp), h1 = Vector3.Dot(o1, objUp), h2 = Vector3.Dot(o2, objUp);
+            bool heightTop = h0 >= maxH - heightEps && h1 >= maxH - heightEps && h2 >= maxH - heightEps;
+            bool vertUp = false;
+            if (hasVertNormals)
+            {
+                float avgN = (Vector3.Dot(meshNormals[ia], objUp) + Vector3.Dot(meshNormals[ib], objUp) +
+                              Vector3.Dot(meshNormals[ic], objUp)) / 3f;
+                vertUp = avgN >= topFaceDotMin * 0.85f;
+            }
+
+            if (faceUp) byFaceNormal++;
+            if (heightTop) byHeight++;
+            if (vertUp) byVertNormal++;
+
+            if (faceUp || heightTop || vertUp)
                 topTris.Add(t);
         }
 
         if (topTris.Count == 0)
-            throw new System.InvalidOperationException("未找到「顶面」三角（请检查法线与世界向上的夹角，或调大顶面判定阈值）。");
+            throw new System.InvalidOperationException("未找到「顶面」三角（请检查法线、厚度或顶面判定阈值）。");
+
+        Debug.Log($"[MapTopContourVertexBaker] {mesh.name}: 顶面三角 {topTris.Count}/{tris.Length / 3} " +
+                  $"(面法线 {byFaceNormal}, 高度带 {byHeight}, 顶点法线 {byVertNormal}, 厚度 {height:F5})");
 
         var topVerts = new HashSet<int>();
         var edgeCount = new Dictionary<(int, int), int>();
@@ -200,7 +318,8 @@ public static class MapTopContourVertexBaker
             r[vi] = 0f;
 
         var adjTop = BuildTopAdjacency(tris, topTris, topVerts);
-        LaplacianSmoothR(r, topVerts, boundaryVerts, adjTop, iterations: 32, lambda: 0.32f);
+        // 迭代过多会把距离场抹成沿三角走向的条纹；略减以保留轮廓渐变
+        LaplacianSmoothR(r, topVerts, boundaryVerts, adjTop, iterations: 10, lambda: 0.22f);
 
         float maxR = 1e-6f;
         foreach (int vi in topVerts)

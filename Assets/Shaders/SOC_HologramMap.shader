@@ -196,14 +196,17 @@ Shader "Custom/SOC_HologramMap"
 
             half4 frag(v2f i) : SV_Target
             {
+                float3 N = normalize(i.worldNormal);
+                float3 up = normalize(_WorldUp.xyz);
+                // 仅朝上的顶面参与轮廓距离（与烘焙器一致，不用 abs 避免底面/侧壁误亮）
+                float topFace = step(_TopFaceCos, dot(N, up));
+
                 float dist = contourDistance(i);
+                // 非顶面：推到「内部」，避免模式 0/5 未烘焙或 UV 辅助在侧壁出现矩形高光
+                dist = lerp(1.0, dist, topFace);
 
                 float rawGrad = pow(saturate(1.0 - dist / max(_GradientBand, 1e-4)), _GradientPower);
                 float rawEdge = pow(saturate(1.0 - dist / max(_EdgeHighlightBand, 1e-4)), _EdgeHighlightPower);
-
-                float3 N = normalize(i.worldNormal);
-                float3 up = normalize(_WorldUp.xyz);
-                float topFace = step(_TopFaceCos, abs(dot(N, up)));
 
                 float3 fwN = float3(fwidth(N.x), fwidth(N.y), fwidth(N.z));
                 float geo = length(fwN) * _GeomAmp * topFace;

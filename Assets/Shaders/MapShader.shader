@@ -196,14 +196,15 @@ Shader "Custom/MapShader"
 
             half4 frag(v2f i) : SV_Target
             {
+                float3 N = normalize(i.worldNormal);
+                float3 up = normalize(_WorldUp.xyz);
+                float topFace = step(_TopFaceCos, dot(N, up));
+
                 float dist = contourDistanceFromMode(i);
+                dist = lerp(1.0, dist, topFace);
 
                 float rawGrad = pow(saturate(1.0 - dist / max(_GradientBand, 1e-4)), _GradientPower);
                 float rawEdge = pow(saturate(1.0 - dist / max(_EdgeHighlightBand, 1e-4)), _EdgeHighlightPower);
-
-                float3 N = normalize(i.worldNormal);
-                float3 up = normalize(_WorldUp.xyz);
-                float topFace = step(_TopFaceCos, abs(dot(N, up)));
 
                 float3 fwN = float3(fwidth(N.x), fwidth(N.y), fwidth(N.z));
                 float geo = length(fwN) * _GeomAmp * topFace;
