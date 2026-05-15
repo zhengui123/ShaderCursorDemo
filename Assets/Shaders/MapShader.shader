@@ -209,7 +209,8 @@ Shader "Custom/MapShader"
                 float3 fwN = float3(fwidth(N.x), fwidth(N.y), fwidth(N.z));
                 float geo = length(fwN) * _GeomAmp * topFace;
                 float geoEdge = pow(saturate(geo), _GeoEdgePower) * saturate(_GeoEdgeBoost);
-                rawEdge = saturate(max(rawEdge, geoEdge));
+                float vertBaked = (_ContourMode >= 4.5) ? step(i.vc.b, 0.06) : 0.0;
+                rawEdge = saturate(max(rawEdge, geoEdge * (1.0 - vertBaked)));
 
                 float cut = saturate(_GradientEdgeCut);
                 float wGrad = saturate(rawGrad - rawEdge * cut);

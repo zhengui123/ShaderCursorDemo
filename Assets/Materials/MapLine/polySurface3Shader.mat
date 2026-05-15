@@ -1,0 +1,74 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: polySurface3Shader
+  m_Shader: {fileID: 4800000, guid: d7758d41ef0bd9f4883f23e03c362506, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _ContourTex:
+        m_Texture: {fileID: 2800000, guid: 24949f44ba1455648a8a241df6caaac1, type: 3}
+        m_Scale: {x: 0.9615385, y: 0.9615385}
+        m_Offset: {x: 0.01923077, y: 0.01923077}
+    - _DetailTex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _MaskTex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: []
+    m_Floats:
+    - _ContourMode: 2
+    - _ContourSdfAmp: 1
+    - _ContourTexChannel: 0
+    - _ContourTexInvert: 0
+    - _CylRadius: 44.8
+    - _DetailAmount: 0
+    - _EdgeHighlightAlpha: 1
+    - _EdgeHighlightBand: 0.1
+    - _EdgeHighlightPower: 10.1
+    - _FresnelIntensity: 0.45
+    - _FresnelPower: 3.5
+    - _FresnelToEdge: 0.55
+    - _GeoEdgeBoost: 0.35
+    - _GeoEdgePower: 0.5
+    - _GeomAmp: 900
+    - _GradientAlpha: 0.8
+    - _GradientBand: 0.4
+    - _GradientEdgeCut: 0.7
+    - _GradientPower: 4.18
+    - _InteriorAlpha: 1
+    - _LocalContourScale: 1
+    - _MaskStrength: 0.35
+    - _TopFaceCos: 0.92
+    - _UV1DistanceInvert: 0
+    - _UVRectAssist: 0
+    - _VertexContourAmp: 0.2
+    m_Colors:
+    - _BoxMaxOS: {r: 0.5, g: 0.5, b: 0.5, a: 0}
+    - _BoxMinOS: {r: -0.5, g: -0.5, b: -0.5, a: 0}
+    - _CylCenterXZ: {r: 0, g: 0, b: 0, a: 0}
+    - _EdgeHighlightColor: {r: 0.35, g: 0.95, b: 1, a: 1}
+    - _GradientColor: {r: 0.8229965, g: 0.8396226, b: 0.08317016, a: 1}
+    - _InteriorColor: {r: 0.02, g: 0.07, b: 0.22, a: 1}
+    - _WorldUp: {r: 0, g: 1, b: 0, a: 0}
+  m_BuildTextureStacks: []

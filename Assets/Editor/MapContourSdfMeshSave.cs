@@ -37,6 +37,14 @@ public static class MapContourSdfMeshSave
             return;
         }
 
+        MapMeshBakeUtility.EnsureMeshReadable(src);
+        if (!src.isReadable)
+        {
+            EditorUtility.DisplayDialog("轮廓贴图烘焙",
+                "网格不可读。已在模型导入设置中尝试开启 Read/Write，请等待重新导入完成后重试。", "确定");
+            return;
+        }
+
         var uvs = src.uv;
         if (uvs == null || uvs.Length != src.vertexCount)
         {
@@ -126,14 +134,15 @@ public static class MapContourSdfMeshSave
                 }
             }
 
-            tex.Apply(false, true);
+            // makeNoLongerReadable 必须为 false，否则 EncodeToPNG 会报 Texture is not readable
+            tex.Apply(false, false);
 
             string dir = (Path.GetDirectoryName(meshSavePath) ?? "Assets").Replace('\\', '/');
             string baseName = Path.GetFileNameWithoutExtension(meshSavePath);
             string texRelative = $"{dir}/{baseName}_ContourSDF.png";
-            string relUnderAssets = texRelative.StartsWith("Assets/", System.StringComparison.Ordinal)
-                ? texRelative.Substring("Assets/".Length)
-                : texRelative;
+            if (!texRelative.StartsWith("Assets/", System.StringComparison.Ordinal))
+                texRelative = "Assets/" + texRelative.TrimStart('/');
+            string relUnderAssets = texRelative.Substring("Assets/".Length);
             string texFull = Path.Combine(Application.dataPath, relUnderAssets.Replace('/', Path.DirectorySeparatorChar));
 
             byte[] png = tex.EncodeToPNG();
@@ -166,6 +175,9 @@ public static class MapContourSdfMeshSave
                 mat.SetVector("_ContourTex_ST", st);
                 mat.SetFloat("_ContourMode", 2f);
                 mat.SetFloat("_ContourTexInvert", 0f);
+                mat.SetFloat("_ContourSdfAmp", 1f);
+                mat.SetFloat("_LocalContourScale", 1f);
+                mat.SetFloat("_UVRectAssist", 0f);
                 EditorUtility.SetDirty(mat);
             }
 
@@ -197,6 +209,7 @@ public static class MapContourSdfMeshSave
         ti.mipmapEnabled = false;
         ti.textureCompression = TextureImporterCompression.Uncompressed;
         ti.maxTextureSize = 4096;
+        ti.isReadable = false;
         ti.SaveAndReimport();
     }
 
@@ -232,22 +245,12 @@ public static class MapContourSdfMeshSave
             int ia = tris[t], ib = tris[t + 1], ic = tris[t + 2];
             Vector3 o0 = verts[ia], o1 = verts[ib], o2 = verts[ic];
             Vector3 fn = Vector3.Cross(o1 - o0, o2 - o0);
-            if (fn.sqrMagnitude < 1e-20f)
-                continue;
-            fn.Normalize();
+            Vector3 n0 = hasVertNormals ? meshNormals[ia] : Vector3.zero;
+            Vector3 n1 = hasVertNormals ? meshNormals[ib] : Vector3.zero;
+            Vector3 n2 = hasVertNormals ? meshNormals[ic] : Vector3.zero;
 
-            bool faceUp = Vector3.Dot(fn, objUp) >= topFaceDotMin;
-            float h0 = Vector3.Dot(o0, objUp), h1 = Vector3.Dot(o1, objUp), h2 = Vector3.Dot(o2, objUp);
-            bool heightTop = h0 >= maxH - heightEps && h1 >= maxH - heightEps && h2 >= maxH - heightEps;
-            bool vertUp = false;
-            if (hasVertNormals)
-            {
-                float avgN = (Vector3.Dot(meshNormals[ia], objUp) + Vector3.Dot(meshNormals[ib], objUp) +
-                              Vector3.Dot(meshNormals[ic], objUp)) / 3f;
-                vertUp = avgN >= topFaceDotMin * 0.85f;
-            }
-
-            if (faceUp || heightTop || vertUp)
+            if (MapMeshBakeUtility.IsTopTriangle(o0, o1, o2, fn, objUp, maxH, heightEps, topFaceDotMin,
+                    hasVertNormals, n0, n1, n2))
                 topTris.Add(t);
         }
 

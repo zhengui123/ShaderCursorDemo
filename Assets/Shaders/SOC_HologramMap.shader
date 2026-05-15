@@ -211,7 +211,9 @@ Shader "Custom/SOC_HologramMap"
                 float3 fwN = float3(fwidth(N.x), fwidth(N.y), fwidth(N.z));
                 float geo = length(fwN) * _GeomAmp * topFace;
                 float geoEdge = pow(saturate(geo), _GeoEdgePower) * saturate(_GeoEdgeBoost);
-                rawEdge = saturate(max(rawEdge, geoEdge));
+                // 模式 5 顶点烘焙时关闭几何法线高光，薄挤出体上否则会整面过亮
+                float vertBaked = (_ContourMode >= 4.5) ? step(i.vc.b, 0.06) : 0.0;
+                rawEdge = saturate(max(rawEdge, geoEdge * (1.0 - vertBaked)));
 
                 float cut = saturate(_GradientEdgeCut);
                 float wGrad = saturate(rawGrad - rawEdge * cut);

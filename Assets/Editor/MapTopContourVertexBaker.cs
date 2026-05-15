@@ -36,6 +36,14 @@ public static class MapTopContourVertexBaker
             return;
         }
 
+        MapMeshBakeUtility.EnsureMeshReadable(mesh);
+        if (!mesh.isReadable)
+        {
+            EditorUtility.DisplayDialog("顶面轮廓烘焙",
+                "网格不可读。请等待模型 Read/Write 重新导入完成后再试。", "确定");
+            return;
+        }
+
         if (!EditorUtility.DisplayDialog("顶面轮廓烘焙",
                 "将写入 Mesh 的顶点色（R=到顶面外轮廓距离归一化，B=0 表示已烘焙）。\n" +
                 "若为工程内共享 Mesh 资源，会自动复制为可写实例并赋给 MeshFilter。\n\n是否继续？",
@@ -105,6 +113,13 @@ public static class MapTopContourVertexBaker
         {
             try
             {
+                MapMeshBakeUtility.EnsureMeshReadable(mf.sharedMesh);
+                if (!mf.sharedMesh.isReadable)
+                {
+                    Debug.LogWarning($"[MapTopContourVertexBaker] 跳过（不可读）: {mf.name}", mf);
+                    continue;
+                }
+
                 Mesh work = PrepareWritableMesh(mf, mf.sharedMesh);
                 Undo.RecordObject(work, "Batch bake top contour");
                 Undo.RecordObject(mf, "Batch bake top contour");
@@ -188,40 +203,24 @@ public static class MapTopContourVertexBaker
         bool hasVertNormals = meshNormals != null && meshNormals.Length == verts.Length;
 
         var topTris = new List<int>();
-        int byFaceNormal = 0, byHeight = 0, byVertNormal = 0;
         for (int t = 0; t < tris.Length; t += 3)
         {
             int ia = tris[t], ib = tris[t + 1], ic = tris[t + 2];
             Vector3 o0 = verts[ia], o1 = verts[ib], o2 = verts[ic];
             Vector3 fn = Vector3.Cross(o1 - o0, o2 - o0);
-            if (fn.sqrMagnitude < 1e-20f)
-                continue;
-            fn.Normalize();
+            Vector3 n0 = hasVertNormals ? meshNormals[ia] : Vector3.zero;
+            Vector3 n1 = hasVertNormals ? meshNormals[ib] : Vector3.zero;
+            Vector3 n2 = hasVertNormals ? meshNormals[ic] : Vector3.zero;
 
-            bool faceUp = Vector3.Dot(fn, objUp) >= topFaceDotMin;
-            float h0 = Vector3.Dot(o0, objUp), h1 = Vector3.Dot(o1, objUp), h2 = Vector3.Dot(o2, objUp);
-            bool heightTop = h0 >= maxH - heightEps && h1 >= maxH - heightEps && h2 >= maxH - heightEps;
-            bool vertUp = false;
-            if (hasVertNormals)
-            {
-                float avgN = (Vector3.Dot(meshNormals[ia], objUp) + Vector3.Dot(meshNormals[ib], objUp) +
-                              Vector3.Dot(meshNormals[ic], objUp)) / 3f;
-                vertUp = avgN >= topFaceDotMin * 0.85f;
-            }
-
-            if (faceUp) byFaceNormal++;
-            if (heightTop) byHeight++;
-            if (vertUp) byVertNormal++;
-
-            if (faceUp || heightTop || vertUp)
+            if (MapMeshBakeUtility.IsTopTriangle(o0, o1, o2, fn, objUp, maxH, heightEps, topFaceDotMin,
+                    hasVertNormals, n0, n1, n2))
                 topTris.Add(t);
         }
 
         if (topTris.Count == 0)
             throw new System.InvalidOperationException("未找到「顶面」三角（请检查法线、厚度或顶面判定阈值）。");
 
-        Debug.Log($"[MapTopContourVertexBaker] {mesh.name}: 顶面三角 {topTris.Count}/{tris.Length / 3} " +
-                  $"(面法线 {byFaceNormal}, 高度带 {byHeight}, 顶点法线 {byVertNormal}, 厚度 {height:F5})");
+        Debug.Log($"[MapTopContourVertexBaker] {mesh.name}: 顶面三角 {topTris.Count}/{tris.Length / 3}，厚度 {height:F5}");
 
         var topVerts = new HashSet<int>();
         var edgeCount = new Dictionary<(int, int), int>();
@@ -311,27 +310,21 @@ public static class MapTopContourVertexBaker
         for (int i = 0; i < r.Length; i++)
             r[i] = 0f;
 
+        // sqrt 拉开内外对比，避免 Laplacian 后整面 R→0 导致顶面全高光
         foreach (int vi in topVerts)
-            r[vi] = Mathf.Clamp01(minD[vi] / maxDist);
+            r[vi] = Mathf.Sqrt(Mathf.Clamp01(minD[vi] / maxDist));
 
         foreach (int vi in boundaryVerts)
             r[vi] = 0f;
 
         var adjTop = BuildTopAdjacency(tris, topTris, topVerts);
-        // 迭代过多会把距离场抹成沿三角走向的条纹；略减以保留轮廓渐变
-        LaplacianSmoothR(r, topVerts, boundaryVerts, adjTop, iterations: 10, lambda: 0.22f);
-
-        float maxR = 1e-6f;
-        foreach (int vi in topVerts)
-        {
-            if (!boundaryVerts.Contains(vi) && r[vi] > maxR)
-                maxR = r[vi];
-        }
+        LaplacianSmoothR(r, topVerts, boundaryVerts, adjTop, iterations: 4, lambda: 0.15f);
 
         foreach (int vi in topVerts)
         {
-            if (!boundaryVerts.Contains(vi))
-                r[vi] = Mathf.Clamp01(r[vi] / maxR);
+            if (boundaryVerts.Contains(vi))
+                continue;
+            r[vi] = Mathf.Clamp(r[vi], 0.12f, 1f);
         }
 
         foreach (int vi in boundaryVerts)
@@ -339,16 +332,10 @@ public static class MapTopContourVertexBaker
 
         var cols = new Color[verts.Length];
         for (int i = 0; i < cols.Length; i++)
-            cols[i] = new Color(1f, 0f, 1f, 1f);
+            cols[i] = new Color(0f, 0f, 1f, 1f);
 
         foreach (int vi in topVerts)
             cols[vi] = new Color(r[vi], 0f, BakedBlueChannel, 1f);
-
-        for (int i = 0; i < cols.Length; i++)
-        {
-            if (!topVerts.Contains(i))
-                cols[i] = new Color(1f, 0f, BakedBlueChannel, 1f);
-        }
 
         mesh.colors = cols;
     }

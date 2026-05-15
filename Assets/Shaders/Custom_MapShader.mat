@@ -24,9 +24,9 @@ Material:
     serializedVersion: 3
     m_TexEnvs:
     - _ContourTex:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
+        m_Texture: {fileID: 2800000, guid: 5fff2404b08eacf409c8e5b99c5753fe, type: 3}
+        m_Scale: {x: 0.9615385, y: 0.9615385}
+        m_Offset: {x: 0.01923077, y: 0.019230312}
     - _DetailTex:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
@@ -37,38 +37,38 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
-    - _ContourMode: 5
-    - _ContourSdfAmp: 0.45
+    - _ContourMode: 2
+    - _ContourSdfAmp: 1
     - _ContourTexChannel: 0
     - _ContourTexInvert: 0
     - _CylRadius: 44.8
     - _DetailAmount: 0
-    - _EdgeHighlightAlpha: 0.95
-    - _EdgeHighlightBand: 0.53
-    - _EdgeHighlightPower: 8
+    - _EdgeHighlightAlpha: 1
+    - _EdgeHighlightBand: 0.1
+    - _EdgeHighlightPower: 10.1
     - _FresnelIntensity: 0.45
     - _FresnelPower: 3.5
     - _FresnelToEdge: 0.55
     - _GeoEdgeBoost: 0.35
-    - _GeoEdgePower: 3
+    - _GeoEdgePower: 0.5
     - _GeomAmp: 900
-    - _GradientAlpha: 0.75
-    - _GradientBand: 0.43
+    - _GradientAlpha: 0.8
+    - _GradientBand: 0.4
     - _GradientEdgeCut: 0.7
-    - _GradientPower: 2.29
+    - _GradientPower: 4.18
     - _InteriorAlpha: 1
-    - _LocalContourScale: 0.68
+    - _LocalContourScale: 1.3
     - _MaskStrength: 0.35
     - _TopFaceCos: 0.92
     - _UV1DistanceInvert: 0
     - _UVRectAssist: 0
-    - _VertexContourAmp: 0.18
+    - _VertexContourAmp: 0.2
     m_Colors:
     - _BoxMaxOS: {r: 0.5, g: 0.5, b: 0.5, a: 0}
     - _BoxMinOS: {r: -0.5, g: -0.5, b: -0.5, a: 0}
     - _CylCenterXZ: {r: 0, g: 0, b: 0, a: 0}
     - _EdgeHighlightColor: {r: 0.35, g: 0.95, b: 1, a: 1}
-    - _GradientColor: {r: 0.47843137, g: 0.058823515, b: 0.4452055, a: 1}
+    - _GradientColor: {r: 0.8229965, g: 0.8396226, b: 0.08317016, a: 1}
     - _InteriorColor: {r: 0.02, g: 0.07, b: 0.22, a: 1}
     - _WorldUp: {r: 0, g: 1, b: 0, a: 0}
   m_BuildTextureStacks: []

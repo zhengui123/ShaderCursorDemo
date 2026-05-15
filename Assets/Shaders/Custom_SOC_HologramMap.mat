@@ -55,12 +55,12 @@ Material:
     - _GeoEdgeBoost: 0.35
     - _GeoEdgePower: 3
     - _GeomAmp: 921
-    - _GradientAlpha: 0.75
+    - _GradientAlpha: 0.44
     - _GradientBand: 0.11
     - _GradientEdgeCut: 0.268
     - _GradientPower: 3.8
     - _GradientSensitivity: 1.26
-    - _InteriorAlpha: 1
+    - _InteriorAlpha: 0.49
     - _LocalContourScale: 0.68
     - _MaskStrength: 0.35
     - _TopFaceCos: 0.92
