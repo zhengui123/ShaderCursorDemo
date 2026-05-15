@@ -1,0 +1,77 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: Old_Soc
+  m_Shader: {fileID: 4800000, guid: c4f2a1b893e54789af2e1d3e45678901, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _ContourTex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _DetailTex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _MaskTex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: []
+    m_Floats:
+    - _ContourMode: 5
+    - _ContourTexChannel: 0.019
+    - _ContourTexInvert: 0
+    - _CylRadius: 0.5
+    - _DetailAmount: 0.12
+    - _EdgeHighlightAlpha: 0.95
+    - _EdgeHighlightBand: 0.16
+    - _EdgeHighlightPower: 8.9
+    - _EdgeHighlightSensitivity: 1.15
+    - _FlatFromUp: 0
+    - _FlatFromUpPower: 4
+    - _FresnelIntensity: 0.45
+    - _FresnelPower: 3.5
+    - _FresnelToEdge: 0.55
+    - _GeoEdgeBoost: 0.35
+    - _GeoEdgePower: 3
+    - _GeomAmp: 921
+    - _GradientAlpha: 0.52
+    - _GradientBand: 0.11
+    - _GradientEdgeCut: 1
+    - _GradientPower: 3.8
+    - _GradientSensitivity: 1.26
+    - _InteriorAlpha: 1
+    - _LocalContourScale: 1.3
+    - _MaskStrength: 0.35
+    - _TopFaceCos: 0.92
+    - _UV1DistanceInvert: 0
+    - _UVRectAssist: 0
+    - _VertexContourAmp: 0.5
+    m_Colors:
+    - _BoxMaxOS: {r: 0.5, g: 0.5, b: 0.5, a: 0}
+    - _BoxMinOS: {r: -0.5, g: -0.5, b: -0.5, a: 0}
+    - _CylCenterXZ: {r: 0, g: 0, b: 0, a: 0}
+    - _EdgeHighlightColor: {r: 0, g: 0.92405057, b: 1, a: 1}
+    - _GradientColor: {r: 0.54878914, g: 1, b: 0, a: 1}
+    - _InteriorColor: {r: 0.02, g: 0.07, b: 0.22, a: 0.79607844}
+    - _WorldUp: {r: 0, g: 1, b: 0, a: 0}
+  m_BuildTextureStacks: []
